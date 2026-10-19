@@ -23,7 +23,7 @@ TestCase {
 	SignalSpy { id: beforeDrag; target: area; signalName: "preDragStarted" }
 	SignalSpy { id: started; target: area; signalName: "dragStarted" }
 	SignalSpy { id: finished; target: area; signalName: "dragFinished" }
-	function test_native_drag() {
+	function test_rejected_drag_reports_ignore_action() {
 		mousePress(area, 10, 10);
 		tryCompare(beforeDrag, "count", 1);
 		wait(100);
@@ -34,5 +34,6 @@ TestCase {
 		mouseRelease(area, 150, 150);
 		tryCompare(started, "count", 1);
 		tryCompare(finished, "count", 1);
+		compare(finished.signalArguments[0][0], Qt.IgnoreAction);
 	}
 }

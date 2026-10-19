@@ -66,14 +66,11 @@ void Backend::drag_paths(const std::vector<Path> &paths) {
 		drag->setPixmap(pixmap);
 	}
 
-	// The object is destroyed by Qt as soon as the drag is finished
-	connect(drag, &QObject::destroyed, this, [this]() {
-		restore_terminal();
-		emit drag_finished();
-		drag = nullptr;
-	});
-
-	std::ignore = drag->exec();
+	const auto drop_action = drag->exec();
+	restore_terminal();
+	drag->deleteLater();
+	drag = nullptr;
+	emit drag_finished(drop_action);
 }
 
 void Backend::print_hyperlinks(const std::vector<Path> &paths) {

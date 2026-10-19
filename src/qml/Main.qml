@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as QQC2
+import QtQuick.Shapes
 import org.kde.kirigami as Kirigami
 
 import Backend
@@ -22,9 +23,47 @@ Kirigami.AbstractApplicationWindow {
 		onActivated: Qt.quit();
 	}
 	DropArea {
+		id: incomingDropArea
 		anchors.fill: parent
+		anchors.margins: 2 * Kirigami.Units.gridUnit
 		enabled: !pathView.dragActive
 		onDropped: drop => Backend.handle_dropped_urls(drop.urls)
+	}
+	Item {
+		anchors.fill: incomingDropArea
+		z: 1
+		visible: incomingDropArea.containsDrag
+		enabled: false
+
+		Rectangle {
+			anchors.fill: parent
+			color: Kirigami.Theme.backgroundColor
+			opacity: 0.9
+		}
+		Shape {
+			id: dropBorder
+			anchors.fill: parent
+			ShapePath {
+				strokeColor: Kirigami.Theme.highlightColor
+				strokeWidth: 2
+				strokeStyle: ShapePath.DashLine
+				dashPattern: [4, 3]
+				fillColor: "transparent"
+				startX: 1
+				startY: 1
+				PathLine { x: dropBorder.width - 1; y: 1 }
+				PathLine { x: dropBorder.width - 1; y: dropBorder.height - 1 }
+				PathLine { x: 1; y: dropBorder.height - 1 }
+				PathLine { x: 1; y: 1 }
+			}
+		}
+		Kirigami.PlaceholderMessage {
+			anchors.centerIn: parent
+			width: parent.width - 4 * Kirigami.Units.largeSpacing
+			type: Kirigami.PlaceholderMessage.Type.Actionable
+			icon.name: "document-import"
+			text: qsTr("Drop files here")
+		}
 	}
 	Welcome {
 		anchors.centerIn: parent

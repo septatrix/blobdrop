@@ -32,7 +32,9 @@ ListView {
 				pathView.dragActive = true;
 			}
 			onDragFinished: dropAction => {
-				PathModel.taint_all_used();
+				if (dropAction !== Qt.IgnoreAction) {
+					PathModel.taint_all_used();
+				}
 				Settings.alwaysOnBottom = false;
 				pathView.dragActive = false;
 			}
@@ -116,7 +118,9 @@ ListView {
 				pathView.dragActive = true;
 			}
 			onDragFinished: dropAction => {
-				PathModel.taint_used(delegate.index);
+				if (dropAction !== Qt.IgnoreAction) {
+					PathModel.taint_used(delegate.index);
+				}
 				Settings.alwaysOnBottom = false;
 				pathView.dragActive = false;
 			}

@@ -9,7 +9,11 @@
 PathModel::PathModel(QObject *parent) {
 	paths = PathRegistry::get()->paths;
 	connect(PathRegistry::get(), &PathRegistry::pathAdded, this, &PathModel::add_path);
-	connect(Backend::get(), &Backend::drag_finished, this, &PathModel::taint_all_used);
+	connect(Backend::get(), &Backend::drag_finished, this, [this](const Qt::DropAction drop_action) {
+		if (drop_action != Qt::IgnoreAction) {
+			taint_all_used();
+		}
+	});
 }
 
 int PathModel::rowCount(const QModelIndex &) const {

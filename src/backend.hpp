@@ -33,7 +33,7 @@ public:
 	Q_INVOKABLE QPoint get_mouse_pos() const;
 	Q_INVOKABLE void handle_dropped_urls(const QList<QUrl> &urls);
 signals:
-	void drag_finished();
+	void drag_finished(Qt::DropAction dropAction);
 private:
 	QDrag *drag = nullptr;
 #ifdef BLOBDROP_WITH_X11

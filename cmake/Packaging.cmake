@@ -74,7 +74,7 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 # QML imports and platform/image plugins are loaded dynamically, so shlibdeps
 # cannot discover them from the executable's ELF dependencies.
 set(CPACK_DEBIAN_PACKAGE_DEPENDS
-	"qml6-module-org-kde-kirigami (>= 6.0), qml6-module-qtquick (>= 6.9), qml6-module-qtquick-controls (>= 6.9), qml6-module-qtquick-templates (>= 6.9), qml6-module-qtquick-window (>= 6.9), qml6-module-qtqml-models (>= 6.9), qml6-module-qtqml-workerscript (>= 6.9), qt6-qpa-plugins (>= 6.9), qt6-svg-plugins (>= 6.9)"
+	"qml6-module-org-kde-kirigami (>= 6.0), qml6-module-qtquick (>= 6.9), qml6-module-qtquick-controls (>= 6.9), qml6-module-qtquick-shapes (>= 6.9), qml6-module-qtquick-templates (>= 6.9), qml6-module-qtquick-window (>= 6.9), qml6-module-qtqml-models (>= 6.9), qml6-module-qtqml-workerscript (>= 6.9), qt6-qpa-plugins (>= 6.9), qt6-svg-plugins (>= 6.9)"
 )
 
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
