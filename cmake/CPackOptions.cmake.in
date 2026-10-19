@@ -1,0 +1,20 @@
+if (CPACK_GENERATOR STREQUAL "AppImage")
+	if (CMAKE_VERSION VERSION_LESS 4.2)
+		message(FATAL_ERROR "AppImage packaging requires CMake/CPack 4.2 or newer")
+	endif()
+	execute_process(COMMAND "${CPACK_APPIMAGE_PATCHELF_EXECUTABLE}" --version
+		OUTPUT_VARIABLE _blobdrop_patchelf_version RESULT_VARIABLE _blobdrop_patchelf_result)
+	string(REGEX MATCH "[0-9]+[.][0-9]+[.][0-9]+" _blobdrop_patchelf_version "${_blobdrop_patchelf_version}")
+	if (NOT _blobdrop_patchelf_result EQUAL 0 OR _blobdrop_patchelf_version VERSION_LESS 0.19.2)
+		message(FATAL_ERROR "AppImage packaging requires patchelf 0.19.2 or newer to safely patch distro libraries. Configure with -DQT_DEPLOY_PATCHELF_EXECUTABLE=/path/to/patchelf.")
+	endif()
+	set(CPACK_PACKAGING_INSTALL_PREFIX "/")
+	list(APPEND CPACK_CUSTOM_INSTALL_VARIABLES BLOBDROP_DEPLOY_RUNTIME=ON)
+else()
+	list(APPEND CPACK_CUSTOM_INSTALL_VARIABLES BLOBDROP_DEPLOY_RUNTIME=OFF)
+endif()
+
+if (CPACK_GENERATOR STREQUAL "DEB" AND CPACK_DEBIAN_PACKAGE_SHLIBDEPS)
+	# CPack otherwise silently omits ELF dependencies when this tool is missing.
+	find_program(DPKG_SHLIBDEPS_EXECUTABLE dpkg-shlibdeps REQUIRED)
+endif()

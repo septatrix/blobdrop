@@ -26,6 +26,26 @@ cmake --install build
 
 X11 terminal lowering is enabled automatically on Unix (except macOS) when `pkg-config` finds the `xcb` and `xcb-ewmh` development packages. Otherwise, it is omitted; Qt still supports running Blobdrop on X11 without it.
 
+## Building Linux packages
+
+Configure and build once, then select a CPack generator:
+
+```bash
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build
+cpack --config build/CPackConfig.cmake -G AppImage -B build/packages
+cpack --config build/CPackConfig.cmake -G DEB -B build/packages
+cpack --config build/CPackConfig.cmake -G RPM -B build/packages
+```
+
+AppImage requires CMake/CPack 4.2 or newer, `appimagetool`, and `patchelf` 0.19.2 or newer (older versions can corrupt current distro libraries). To select a custom tool, configure with `-DQT_DEPLOY_PATCHELF_EXECUTABLE=/path/to/patchelf`. In containers without FUSE, use `APPIMAGE_EXTRACT_AND_RUN=1` when `appimagetool` is itself an AppImage.
+
+AppImage bundles Qt libraries, plugins, and QML imports using Qt's CMake deployment support, while using the host's C/C++ runtimes and graphics drivers. Install the Qt Wayland runtime on the build host to include its native Wayland backend. Build on the oldest distribution you intend to support.
+
+DEB packages require `dpkg-shlibdeps` (from `dpkg-dev`); RPM packages require `rpmbuild`. Build native packages on the target distribution so their automatically detected library dependencies match it. Qt is supplied by the distribution; additional QML and plugin dependencies are declared explicitly. The RPM defaults use Fedora package names; override `CPACK_RPM_PACKAGE_REQUIRES` for other RPM distributions.
+
+Set the package maintainer when configuring release packages, for example `-DCPACK_PACKAGE_CONTACT="Your Name <you@example.org>"`. CPack writes packages and SHA256 checksums to the selected output directory. Ordinary installation does not bundle runtime libraries.
+
 # Usage
 
 ```bash

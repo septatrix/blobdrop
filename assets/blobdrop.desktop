@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Blobdrop
+Comment=Drag and drop files directly out of the terminal
+Exec=blobdrop %F
+Icon=blobdrop
+Categories=Utility;
+Terminal=false

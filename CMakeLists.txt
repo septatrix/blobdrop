@@ -8,6 +8,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND QT_MODULES Core Qml Quick QuickControls2 DBus Svg)
+# AppImage deployment needs to add RPATHs even to distro libraries with none.
+# Resolve patchelf at packaging time, keeping ordinary builds independent of it.
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	set(QT_DEPLOY_USE_PATCHELF ON)
+	if (NOT QT_DEPLOY_PATCHELF_EXECUTABLE)
+		set(QT_DEPLOY_PATCHELF_EXECUTABLE patchelf)
+	endif()
+endif()
 find_package(Qt6 6.9 COMPONENTS ${QT_MODULES} REQUIRED)
 qt_standard_project_setup(REQUIRES ${Qt6_VERSION})
 list(TRANSFORM QT_MODULES PREPEND "Qt6::")
@@ -48,6 +56,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${LINK_LIBS})
 install(TARGETS ${PROJECT_NAME} RUNTIME)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/man/" TYPE MAN)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/completions/" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}")
+install(FILES LICENSE.txt DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/blobdrop" RENAME copyright)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	install(FILES assets/blobdrop.desktop DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications")
+	install(FILES assets/blobdrop.svg DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps")
+	include(cmake/Packaging.cmake)
+endif()
 
 # testing
 if (BUILD_TESTING)
