@@ -1,20 +1,20 @@
 import QtQuick
-import QtQuick.Controls.Material
+import QtQuick.Controls as QQC2
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 
 import Backend
 
-Column {
-	spacing: 64
-	Label {
-		width: parent.width
-		horizontalAlignment: Text.AlignHCenter
-		text: Settings.intercept ? "Intercept and convert an existing DnD action by dropping it here." : "Pass file names as arguments or pipe them to stdin to make them appear here and drag them anywhere.\nAlternatively use this window as a sink by dropping files here."
-		wrapMode: Text.WordWrap
-	}
-	CheckBox {
-		anchors.horizontalCenter: parent.horizontalCenter
-		text: "Keep dropped items"
+Kirigami.PlaceholderMessage {
+	icon.name: Settings.intercept ? "edit-paste" : "document-open"
+	text: Settings.intercept ? qsTr("Drop files to intercept") : qsTr("No files to drag")
+	explanation: Settings.intercept
+		? qsTr("Drop an existing drag here to convert it to another frontend.")
+		: qsTr("Pass file names as arguments or pipe them to stdin. You can also drop files here to print their paths.")
+	QQC2.CheckBox {
+		Layout.alignment: Qt.AlignHCenter
+		text: qsTr("Keep dropped items")
 		checked: Settings.keepDroppedFiles
-		onCheckedChanged: Settings.keepDroppedFiles = checked;
+		onToggled: Settings.keepDroppedFiles = checked
 	}
 }

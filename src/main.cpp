@@ -1,10 +1,12 @@
-#include <QGuiApplication>
+#include <QApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <QQuickStyle>
 
-#include "Util/termination_signals.hpp"
+#ifdef Q_OS_UNIX
+#include <KSignalHandler>
+#include <csignal>
+#endif
+
 #include "backend.hpp"
 #include "getopts.hpp"
 #include "version.hpp"
@@ -13,11 +15,15 @@ int main(int argc, char *argv[]) {
 	QCoreApplication::setOrganizationName("blobdrop");
 	QCoreApplication::setApplicationName("blobdrop");
 	QCoreApplication::setApplicationVersion(Version::version_string());
-	QGuiApplication app(argc, argv);
+	QApplication app(argc, argv);
 
 #ifdef Q_OS_UNIX
-	// handle unix signals
-	Util::TerminationSignals signal_handler {[] { Backend::get()->quit_delayed(0ms); }};
+	// Relay termination signals through the event loop so shutdown restores the tty.
+	auto *signal_handler = KSignalHandler::self();
+	for (const int signal : {SIGINT, SIGHUP, SIGTERM, SIGQUIT}) {
+		signal_handler->watchSignal(signal);
+	}
+	QObject::connect(signal_handler, &KSignalHandler::signalReceived, &app, [](int) { Backend::get()->quit_delayed(0ms); });
 #endif
 
 	const auto &args = Getopts::setup_args(argc, argv);

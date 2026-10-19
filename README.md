@@ -14,7 +14,7 @@ You can also download an AppImage from the [latest release](https://github.com/v
 
 ## Building from source
 
-Make sure you have a C++23 compiler and the latest Qt with the Declarative and Svg modules installed.
+Make sure you have a C++23 compiler, CMake 3.31 or newer, Qt 6.9 or newer (including Declarative, Widgets, and Svg), KDE Extra CMake Modules 6, and the Kirigami 6 and KCoreAddons 6 development packages installed. The GUI uses Kirigami and the current Qt Quick Controls style; it does not force a theme or color palette. KDE's QQC2 desktop style can be installed for desktop theme integration.
 
 ```bash
 cmake -B build
@@ -42,7 +42,7 @@ AppImage requires CMake/CPack 4.2 or newer, `appimagetool`, and `patchelf` 0.19.
 
 AppImage bundles Qt libraries, plugins, and QML imports using Qt's CMake deployment support, while using the host's C/C++ runtimes and graphics drivers. Install the Qt Wayland runtime on the build host to include its native Wayland backend. Build on the oldest distribution you intend to support.
 
-DEB packages require `dpkg-shlibdeps` (from `dpkg-dev`); RPM packages require `rpmbuild`. Build native packages on the target distribution so their automatically detected library dependencies match it. Qt is supplied by the distribution; additional QML and plugin dependencies are declared explicitly. The RPM defaults use Fedora package names; override `CPACK_RPM_PACKAGE_REQUIRES` for other RPM distributions.
+DEB packages require `dpkg-shlibdeps` (from `dpkg-dev`); RPM packages require `rpmbuild`. Build native packages on the target distribution so their automatically detected library dependencies match it. Qt and Kirigami are supplied by the distribution; additional QML and plugin dependencies are declared explicitly. The RPM defaults use Fedora package names; override `CPACK_RPM_PACKAGE_REQUIRES` for other RPM distributions.
 
 Set the package maintainer when configuring release packages, for example `-DCPACK_PACKAGE_CONTACT="Your Name <you@example.org>"`. CPack writes packages and SHA256 checksums to the selected output directory. Ordinary installation does not bundle runtime libraries.
 

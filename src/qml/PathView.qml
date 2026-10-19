@@ -1,124 +1,122 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Controls.Material
+import QtQuick.Controls as QQC2
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 
 import Backend
 
 ListView {
 	id: pathView
 	property bool dragActive: false
-
 	model: PathModel
-	visible: count
-	spacing: 6
-	header: Button {
-		width: parent.width
-		height: pathView.count > 1 ? 40 : 0
-		Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.InOutSine }}
+	Component.onCompleted: PathModel.finish_init()
+
+	header: QQC2.Button {
+		id: dragAllButton
+		width: pathView.width
+		height: visible ? implicitHeight : 0
 		visible: pathView.count > 1
-		highlighted: true
-		text: "Drag all " + (PathModel.multiSelected ? PathModel.multiSelected : pathView.count) + " items"
-		Button {
-			id: dragallDummy
-			visible: false
-			icon.name: "emblem-documents-symbolic"
-			icon.color: "transparent"
-			width: Settings.thumbnailSize
-			height: Settings.thumbnailSize
-		}
+		icon.name: "document-multiple"
+		text: PathModel.multiSelected
+			? qsTr("Drag %1 selected items").arg(PathModel.multiSelected)
+			: qsTr("Drag all %1 items").arg(pathView.count)
 		DragArea {
 			anchors.fill: parent
-			target: dragallDummy
+			target: dragAllButton
 			dragUri: PathModel.foldedUriList
-			Component.onCompleted: {
-				PathModel.finish_init();
-			}
-			onPreDragStarted: {
-				PathModel.refresh_folded_paths();
-			}
+			onPreDragStarted: PathModel.refresh_folded_paths()
 			onDragStarted: {
 				Settings.alwaysOnBottom = true;
 				pathView.dragActive = true;
 			}
-			onDragFinished: (dropAction) => {
+			onDragFinished: dropAction => {
 				PathModel.taint_all_used();
 				Settings.alwaysOnBottom = false;
 				pathView.dragActive = false;
 			}
 		}
 	}
-	delegate: Item {
-		height: Settings.thumbnailSize
+	delegate: QQC2.ItemDelegate {
+		id: delegate
+		required property int index
+		required property string path
+		required property string uri
+		required property string pretty
+		required property string iconName
+		required property url thumbnail
+		required property bool used
+		required property bool multiselect
+		required property bool exists
+
 		width: ListView.view.width
-		Pane {
-			id: pane
-			anchors.fill: parent
-			Material.elevation: 6
-			padding: 0
-			Button {
-				id: iconButton
-				anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-				width: height
-				visible: thumbnail == ""
-				icon.name: iconName
-				icon.source: "qrc:///blobdrop" // fallback icon
-				icon.color: "transparent"
-				icon.width: parent.height
-				icon.height: parent.height
-				flat: true
-				enabled: false
+		text: pretty
+		highlighted: multiselect
+		onClicked: PathModel.open(index)
+		QQC2.ToolTip.text: path + (!exists ? "\n" + qsTr("File does not exist") : used ? "\n" + qsTr("Already dragged") : "")
+		QQC2.ToolTip.visible: dragArea.containsMouse
+		QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+		contentItem: RowLayout {
+			spacing: Kirigami.Units.smallSpacing
+			Item {
+				id: preview
+				Layout.preferredWidth: Settings.thumbnailSize
+				Layout.preferredHeight: Settings.thumbnailSize
+				Kirigami.Icon {
+					anchors.fill: parent
+					source: delegate.iconName
+					fallback: "qrc:/blobdrop"
+					visible: !thumbnailImage.visible
+				}
+				Image {
+					id: thumbnailImage
+					anchors.fill: parent
+					source: delegate.thumbnail
+					visible: status === Image.Ready
+					fillMode: Image.PreserveAspectFit
+					sourceSize.width: Settings.thumbnailSize
+					sourceSize.height: Settings.thumbnailSize
+					asynchronous: true
+				}
 			}
-			Image {
-				id: thumbnailImg
-				anchors.fill: iconButton
-				visible: !iconButton.visible
-				source: thumbnail
-				fillMode: Image.PreserveAspectCrop
-				mipmap: true
-				asynchronous: true
-			}
-			Label {
-				anchors { left: iconButton.right; right: usedIndicator.left; rightMargin: 4; }
-				text: pretty
+			QQC2.Label {
+				Layout.fillWidth: true
+				text: delegate.pretty
+				textFormat: Text.PlainText
 				elide: Text.ElideRight
-				height: parent.height
-				verticalAlignment: Text.AlignVCenter
-				horizontalAlignment: Text.AlignHCenter
 				wrapMode: Text.Wrap
+				maximumLineCount: 2
 				visible: !Settings.iconOnly
-				ToolTip.text: path
-				ToolTip.visible: dragArea.containsMouse && (count > 1)
-				ToolTip.delay: 1500
-				ToolTip.timeout: 2000
 			}
-			Rectangle {
-				id: usedIndicator
-				anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
-				width: 8 + multiselect * 40
-				color: used ? Material.primary : exists ? Material.color(Material.Grey) : Material.color(Material.Red)
-				Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.InOutSine }}
-				Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.InOutSine }}
+			Kirigami.Icon {
+				Layout.preferredWidth: Kirigami.Units.iconSizes.small
+				Layout.preferredHeight: Kirigami.Units.iconSizes.small
+				source: !delegate.exists ? "dialog-warning" : "emblem-ok-symbolic"
+				visible: !delegate.exists || delegate.used
 			}
 		}
 		DragArea {
 			id: dragArea
 			anchors.fill: parent
-			target: iconButton.visible ? iconButton : thumbnailImg
-			dragUri: uri
+			target: preview
+			dragUri: delegate.uri
 			hoverEnabled: true
 			acceptedButtons: Qt.LeftButton | Qt.RightButton
-			onClicked: (ev) => {
+			onClicked: ev => {
 				if (ev.modifiers & Qt.ControlModifier) {
-					PathModel.multiselect(index);
+					PathModel.multiselect(delegate.index);
 				} else {
-					PathModel.open(index);
+					PathModel.open(delegate.index);
 				}
 			}
 			onDragStarted: {
 				Settings.alwaysOnBottom = true;
 				pathView.dragActive = true;
 			}
-			onDragFinished: (dropAction) => {
-				PathModel.taint_used(index)
+			onDragFinished: dropAction => {
+				PathModel.taint_used(delegate.index);
 				Settings.alwaysOnBottom = false;
 				pathView.dragActive = false;
 			}

@@ -18,6 +18,7 @@
 
 				nativeBuildInputs = with pkgs; [
 					cmake
+					extra-cmake-modules
 					pkg-config
 					qt6.wrapQtAppsHook
 				];
@@ -25,6 +26,9 @@
 					qt6.qtbase
 					qt6.qtdeclarative
 					qt6.qtsvg
+					kdePackages.kirigami
+					kdePackages.kcoreaddons
+					kdePackages.qqc2-desktop-style
 				];
 			};
 		in {

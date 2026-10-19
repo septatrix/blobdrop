@@ -1,6 +1,12 @@
 # Only AppImage packages bundle Qt. Native packages use distribution libraries.
 set(deploy_content [=[
 		qt_deploy_qml_imports(TARGET blobdrop PLUGINS_FOUND qml_plugins)
+		# Kirigami's style selector also looks for QML files on disk, even when
+		# qmldir prefers embedded resources. Preserve these without replacing
+		# the plugin binaries that Qt has already deployed and patched.
+		file(COPY "@BLOBDROP_KIRIGAMI_QML_ROOT@/org/kde/kirigami"
+			DESTINATION "${QT_DEPLOY_PREFIX}/${QT_DEPLOY_QML_DIR}/org/kde"
+			PATTERN "*.so*" EXCLUDE)
 		# Qt may deploy only its default platform (often xcb). Include available
 		# Wayland backends and offscreen support, including with Qt 6.9.
 		file(GLOB platform_plugins
@@ -68,14 +74,14 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 # QML imports and platform/image plugins are loaded dynamically, so shlibdeps
 # cannot discover them from the executable's ELF dependencies.
 set(CPACK_DEBIAN_PACKAGE_DEPENDS
-	"qml6-module-qtquick (>= 6.9), qml6-module-qtquick-controls (>= 6.9), qml6-module-qtquick-templates (>= 6.9), qml6-module-qtquick-window (>= 6.9), qml6-module-qtqml-models (>= 6.9), qml6-module-qtqml-workerscript (>= 6.9), qt6-qpa-plugins (>= 6.9), qt6-svg-plugins (>= 6.9)"
+	"qml6-module-org-kde-kirigami (>= 6.0), qml6-module-qtquick (>= 6.9), qml6-module-qtquick-controls (>= 6.9), qml6-module-qtquick-templates (>= 6.9), qml6-module-qtquick-window (>= 6.9), qml6-module-qtqml-models (>= 6.9), qml6-module-qtqml-workerscript (>= 6.9), qt6-qpa-plugins (>= 6.9), qt6-svg-plugins (>= 6.9)"
 )
 
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-only")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Utilities")
 # Fedora package names; other RPM distributions can override this with cpack -D.
-set(CPACK_RPM_PACKAGE_REQUIRES "qt6-qtdeclarative >= 6.9, qt6-qtbase-gui >= 6.9, qt6-qtsvg >= 6.9")
+set(CPACK_RPM_PACKAGE_REQUIRES "kf6-kirigami >= 6.0, qt6-qtdeclarative >= 6.9, qt6-qtbase-gui >= 6.9, qt6-qtsvg >= 6.9")
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
 	/usr/share/applications
 	/usr/share/bash-completion /usr/share/bash-completion/completions

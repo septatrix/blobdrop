@@ -1,7 +1,9 @@
+#include <QProcess>
+#include <QProcessEnvironment>
 #include <QScopeGuard>
+#include <QTemporaryFile>
 #include <QTest>
 
-#include "Util/termination_signals.hpp"
 #include "Util/util.hpp"
 #include "getopts.hpp"
 #include "path.hpp"
@@ -60,18 +62,25 @@ private slots:
 		QVERIFY(Getopts::setup_args(0, nullptr).isEmpty());
 	}
 
-#ifdef Q_OS_UNIX
-	void test_termination_signals() {
-		bool handled = false;
-		Util::TerminationSignals handler {[&handled] { handled = true; }};
-		for (const int signal : {SIGINT, SIGHUP, SIGTERM, SIGQUIT}) {
-			handled = false;
-			QCOMPARE(raise(signal), 0);
-			QVERIFY(!handled);
-			QTRY_VERIFY(handled);
-		}
+	void test_qml_frontend_initialization() {
+		QTemporaryFile file;
+		QVERIFY(file.open());
+		auto environment = QProcessEnvironment::systemEnvironment();
+		environment.remove("BLOBDROP_ARGS");
+		environment.insert("QT_QPA_PLATFORM", "offscreen");
+		environment.insert("QT_QUICK_BACKEND", "software");
+		environment.insert("QT_QUICK_CONTROLS_STYLE", "Fusion");
+		environment.insert("QT_FORCE_STDERR_LOGGING", "1");
+		QProcess process;
+		process.setProcessEnvironment(environment);
+		process.start(BLOBDROP_EXECUTABLE, {"-f", "stdout", file.fileName()});
+		process.closeWriteChannel();
+		QVERIFY(process.waitForFinished(10000));
+		const auto errors = process.readAllStandardError();
+		QVERIFY2(process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0, errors.constData());
+		QVERIFY(process.readAllStandardOutput().contains(QUrl::fromLocalFile(file.fileName()).toEncoded()));
+		QVERIFY2(!errors.contains("ReferenceError") && !errors.contains("TypeError"), errors.constData());
 	}
-#endif
 };
 
 QTEST_MAIN(PathTest)
