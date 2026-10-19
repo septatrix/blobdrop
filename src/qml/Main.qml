@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls.Material
-import Quartz
 
 import Backend
 
@@ -25,9 +24,16 @@ ApplicationWindow {
 		onActivated: Qt.quit();
 	}
 	DropArea {
+		anchors.fill: parent
 		enabled: !pathView.dragActive
 		onDropped: (drop) => {
 			Backend.handle_dropped_urls(drop.urls);
+		}
+		Rectangle {
+			anchors.fill: parent
+			color: Material.accent
+			opacity: parent.containsDrag ? 0.2 : 0
+			Behavior on opacity { NumberAnimation { duration: 200 }}
 		}
 	}
 	Welcome {

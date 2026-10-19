@@ -2,7 +2,6 @@
 
 #include <QCommandLineParser>
 #include <iostream>
-#include <quartz/getopts.hpp>
 
 #include "path_registry.hpp"
 #include "settings.hpp"

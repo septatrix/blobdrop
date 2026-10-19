@@ -8,8 +8,18 @@
 namespace Getopts {
 
 QStringList setup_args(int argc, char *argv[]) {
-	const auto *env = std::getenv("BLOBDROP_ARGS");
-	return quartz::getopts::prepend_args(argc, argv, env);
+	if (argc <= 0) {
+		return {};
+	}
+	QStringList args {QString::fromLocal8Bit(argv[0])};
+	if (const auto *env = std::getenv("BLOBDROP_ARGS"); env && *env) {
+		// Preserve the existing space-separated environment arguments.
+		args.append(QString::fromLocal8Bit(env).split(' '));
+	}
+	for (int i = 1; i < argc; ++i) {
+		args.append(QString::fromLocal8Bit(argv[i]));
+	}
+	return args;
 }
 
 bool parse(const QStringList &args) {
@@ -107,7 +117,7 @@ bool parse(const QStringList &args) {
 			return false;
 		}
 		const auto c = static_cast<Settings::Frontend>(std::get<1>(frontend_selection.front()));
-		if (c == Settings::Frontend::Immediate && quartz::util::is_wayland()) {
+		if (c == Settings::Frontend::Immediate && Util::is_wayland()) {
 			std::cerr << "Wayland does not have support for this frontend, as the spec requires an implicit grab for native wl_data_device::start_drag() operations, thus making it impossible to implement this workflow on Wayland." << std::endl
 					  << "This frontend might work over XWayland (force it with QT_QPA_PLATFORM=xcb) but will likely be very buggy. Please switch to X11 to get the optimal usability experience or use another frontend." << std::endl;
 			return false;

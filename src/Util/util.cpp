@@ -11,6 +11,10 @@
 
 namespace Util {
 
+bool is_wayland() {
+	return QGuiApplication::platformName().startsWith("wayland");
+}
+
 const char *home_dir() {
 	static const char *result = nullptr;
 	if (!result) {

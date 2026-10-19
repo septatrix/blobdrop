@@ -28,10 +28,6 @@ if (UNIX AND NOT APPLE)
 	endif()
 endif()
 
-include(FetchContent)
-FetchContent_Declare(quartz GIT_REPOSITORY https://github.com/vimpostor/quartz.git GIT_TAG v0.9.1)
-FetchContent_MakeAvailable(quartz)
-
 include_directories("src" "src/Models")
 add_compile_definitions(BLOBDROP_VERSION="${PROJECT_VERSION}")
 
@@ -47,7 +43,6 @@ qt_add_qml_module(${PROJECT_NAME} URI "Backend" VERSION "${PROJECT_VERSION}" QML
 set_target_properties(${PROJECT_NAME} PROPERTIES QT_QMLCACHEGEN_ARGUMENTS "--only-bytecode")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINK_LIBS})
-quartz_link(${PROJECT_NAME} NO_ICONS)
 
 # install
 install(TARGETS ${PROJECT_NAME} RUNTIME)

@@ -4,7 +4,7 @@ bool Settings::supportsImmediate() const {
 #if defined(Q_OS_WIN)
 	return false;
 #endif
-	return !quartz::util::is_wayland();
+	return !Util::is_wayland();
 }
 
 void Settings::setAlwaysOnBottom(const bool v) {
