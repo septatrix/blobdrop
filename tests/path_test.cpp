@@ -1,3 +1,8 @@
+#include <KUrlMimeData>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QMimeData>
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QScopeGuard>
@@ -80,6 +85,33 @@ private slots:
 		QVERIFY2(process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0, errors.constData());
 		QVERIFY(process.readAllStandardOutput().contains(QUrl::fromLocalFile(file.fileName()).toEncoded()));
 		QVERIFY2(!errors.contains("ReferenceError") && !errors.contains("TypeError"), errors.constData());
+	}
+
+	void test_portal_file_transfer() {
+		QDBusInterface portal(
+			"org.freedesktop.portal.Documents",
+			"/org/freedesktop/portal/documents",
+			"org.freedesktop.portal.FileTransfer",
+			QDBusConnection::sessionBus());
+		if (!portal.isValid()) {
+			QSKIP("The FileTransfer portal is not available in this test environment");
+		}
+
+		QTemporaryFile file;
+		QVERIFY(file.open());
+		const auto key = [&file] {
+			QMimeData mime_data;
+			mime_data.setUrls({QUrl::fromLocalFile(file.fileName())});
+			if (!KUrlMimeData::exportUrlsToPortal(&mime_data)) {
+				return QByteArray {};
+			}
+			return mime_data.data("application/vnd.portal.filetransfer");
+		}();
+		QVERIFY(!key.isEmpty());
+		const QDBusReply<QStringList> reply = portal.call(
+			"RetrieveFiles", QString::fromUtf8(key), QVariantMap {});
+		QVERIFY(reply.isValid());
+		QCOMPARE(reply.value(), QStringList {file.fileName()});
 	}
 };
 

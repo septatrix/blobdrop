@@ -32,6 +32,7 @@ public:
 	void exec_frontend(const std::vector<Path> &paths);
 	Q_INVOKABLE QPoint get_mouse_pos() const;
 	Q_INVOKABLE void handle_dropped_urls(const QList<QUrl> &urls);
+	Q_INVOKABLE QByteArray portal_transfer_data(const QString &uri_list);
 signals:
 	void drag_finished(Qt::DropAction dropAction);
 private:

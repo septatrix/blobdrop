@@ -1,5 +1,6 @@
 #include "backend.hpp"
 
+#include <KUrlMimeData>
 #include <QClipboard>
 #include <QCursor>
 #include <QDBusInterface>
@@ -7,6 +8,7 @@
 #include <QIcon>
 #include <QMimeData>
 #include <QPixmap>
+#include <QRegularExpression>
 
 #include "path_registry.hpp"
 #include "settings.hpp"
@@ -40,6 +42,7 @@ void Backend::drag_paths(const std::vector<Path> &paths) {
 	}
 
 	mimedata->setUrls(urls);
+	KUrlMimeData::exportUrlsToPortal(mimedata);
 	drag->setMimeData(mimedata);
 
 	constexpr const int cursor_size = 24;
@@ -157,6 +160,19 @@ void Backend::exec_frontend(const std::vector<Path> &paths) {
 
 QPoint Backend::get_mouse_pos() const {
 	return QCursor::pos();
+}
+
+QByteArray Backend::portal_transfer_data(const QString &uri_list) {
+	QList<QUrl> urls;
+	for (const auto &line : uri_list.split(QRegularExpression("[\\r\\n]+"), Qt::SkipEmptyParts)) {
+		urls.push_back(QUrl(line));
+	}
+	QMimeData mime_data;
+	mime_data.setUrls(urls);
+	if (!KUrlMimeData::exportUrlsToPortal(&mime_data)) {
+		return {};
+	}
+	return mime_data.data("application/vnd.portal.filetransfer");
 }
 
 void Backend::handle_dropped_urls(const QList<QUrl> &urls) {

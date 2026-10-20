@@ -26,6 +26,7 @@ ListView {
 			anchors.fill: parent
 			target: dragAllButton
 			dragUri: PathModel.foldedUriList
+			createPortalTransfer: uri => Backend.portal_transfer_data(uri)
 			onPreDragStarted: PathModel.refresh_folded_paths()
 			onDragStarted: {
 				Settings.alwaysOnBottom = true;
@@ -104,6 +105,7 @@ ListView {
 			anchors.fill: parent
 			target: preview
 			dragUri: delegate.uri
+			createPortalTransfer: uri => Backend.portal_transfer_data(uri)
 			hoverEnabled: true
 			acceptedButtons: Qt.LeftButton | Qt.RightButton
 			onClicked: ev => {

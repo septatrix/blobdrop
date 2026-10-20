@@ -4,6 +4,8 @@ MouseArea {
 	id: root
 	required property Item target
 	property string dragUri: ""
+	property string portalTransferData: ""
+	property var createPortalTransfer: uri => ""
 	signal preDragStarted()
 	signal dragStarted()
 	signal dragFinished(var dropAction)
@@ -11,6 +13,7 @@ MouseArea {
 	drag.target: dragItem
 	preventStealing: true
 	onPressed: {
+		portalTransferData = createPortalTransfer(dragUri);
 		preDragStarted();
 		const scale = Math.min(1, 64 / target.width, 64 / target.height);
 		target.grabToImage(result => {
@@ -27,9 +30,16 @@ MouseArea {
 			delayed: true
 		}
 		Drag.dragType: Drag.Automatic
-		Drag.mimeData: ({ "text/uri-list": root.dragUri })
+		Drag.mimeData: {
+			const data = { "text/uri-list": root.dragUri };
+			if (root.portalTransferData.length > 0) {
+				data["application/vnd.portal.filetransfer"] = root.portalTransferData;
+			}
+			return data;
+		}
 		Drag.onDragStarted: root.dragStarted()
 		Drag.onDragFinished: dropAction => {
+			root.portalTransferData = "";
 			x = 0;
 			y = 0;
 			root.dragFinished(dropAction);
