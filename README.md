@@ -14,7 +14,7 @@ You can also download an AppImage from the [latest release](https://github.com/v
 
 ## Building from source
 
-Make sure you have a C++23 compiler, CMake 3.31 or newer, Qt 6.9 or newer (including Declarative, Widgets, and Svg), KDE Extra CMake Modules 6, and the Kirigami 6 and KCoreAddons 6 development packages installed. The GUI uses Kirigami and the current Qt Quick Controls style; it does not force a theme or color palette. KDE's QQC2 desktop style can be installed for desktop theme integration.
+Make sure you have a C++23 compiler, CMake 3.31 or newer, Qt 6.9 or newer (including Declarative, Widgets, and Svg), KDE Extra CMake Modules 6, and the Kirigami 6, KCoreAddons 6, KNotifications 6, and KWindowSystem 6 development packages installed. The GUI uses Kirigami and the current Qt Quick Controls style; it does not force a theme or color palette. KDE's QQC2 desktop style can be installed for desktop theme integration.
 
 ```bash
 cmake -B build
@@ -24,7 +24,7 @@ cmake --build build
 cmake --install build
 ```
 
-X11 terminal lowering is enabled automatically on Unix (except macOS) when `pkg-config` finds the `xcb` and `xcb-ewmh` development packages. Otherwise, it is omitted; Qt still supports running Blobdrop on X11 without it.
+On X11, terminal lowering is implemented through KWindowSystem.
 
 ## Building Linux packages
 

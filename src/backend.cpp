@@ -1,9 +1,11 @@
 #include "backend.hpp"
 
+#include <KNotification>
 #include <KUrlMimeData>
+#include <KWindowSystem>
+#include <KX11Extras>
 #include <QClipboard>
 #include <QCursor>
-#include <QDBusInterface>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QMimeData>
@@ -83,28 +85,25 @@ void Backend::print_hyperlinks(const std::vector<Path> &paths) {
 }
 
 void Backend::send_drag_notification(const std::vector<Path> &uris) {
-#if !defined(Q_OS_WIN) && !defined(Q_OS_DARWIN)
 	if (uris.empty()) {
 		return;
 	}
 
-	auto session = QDBusConnection::sessionBus();
-	auto msg = QDBusMessage::createMethodCall("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications", "Notify");
-
-	QList<QString> urls;
+	QList<QUrl> urls;
 	for (const auto &u : uris) {
-		urls.push_back(QString::fromStdString(u.get_uri()));
+		urls.push_back(u.get_url());
 	}
 
-	QVariantMap hints;
-	hints["x-kde-urls"] = urls;
 	QString title = "Drag file";
 	if (uris.size() > 1) {
 		title += "s";
 	}
-	msg.setArguments({"blobdrop", 0U, "cursor-arrow", title, "", QStringList(), hints, 5000});
-	session.call(msg);
-#endif
+	auto *notification = new KNotification(
+		QStringLiteral("notification"), KNotification::CloseOnTimeout | KNotification::DefaultEvent);
+	notification->setTitle(title);
+	notification->setIconName(QStringLiteral("cursor-arrow"));
+	notification->setUrls(urls);
+	notification->sendEvent();
 }
 
 void Backend::copy_to_clipboard(const std::vector<Path> &paths) {
@@ -122,25 +121,25 @@ void Backend::copy_to_clipboard(const std::vector<Path> &paths) {
 }
 
 void Backend::hide_terminal() {
-#ifdef BLOBDROP_WITH_X11
-	if (Settings::get()->suppress_always_on_bottom || Settings::get()->intercept || !Stdin::get()->is_tty || !xcb.init()) {
+#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
+	if (Settings::get()->suppress_always_on_bottom || Settings::get()->intercept || !Stdin::get()->is_tty || !KWindowSystem::isPlatformX11()) {
 		return;
 	}
 
-	last_window = xcb.active_window();
+	last_window = KX11Extras::activeWindow();
 	if (last_window) {
-		xcb.set_keep_window_below(last_window);
+		KX11Extras::setState(last_window, NET::KeepBelow);
 	}
 #endif
 }
 
 void Backend::restore_terminal() {
-#ifdef BLOBDROP_WITH_X11
+#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
 	if (!last_window) {
 		return;
 	}
 
-	xcb.set_keep_window_below(last_window, false);
+	KX11Extras::clearState(last_window, NET::KeepBelow);
 	last_window = 0;
 #endif
 }
@@ -167,12 +166,14 @@ QByteArray Backend::portal_transfer_data(const QString &uri_list) {
 	for (const auto &line : uri_list.split(QRegularExpression("[\\r\\n]+"), Qt::SkipEmptyParts)) {
 		urls.push_back(QUrl(line));
 	}
-	QMimeData mime_data;
-	mime_data.setUrls(urls);
-	if (!KUrlMimeData::exportUrlsToPortal(&mime_data)) {
+	delete qml_portal_mime_data;
+	qml_portal_mime_data = new QMimeData;
+	qml_portal_mime_data->setParent(this);
+	qml_portal_mime_data->setUrls(urls);
+	if (!KUrlMimeData::exportUrlsToPortal(qml_portal_mime_data)) {
 		return {};
 	}
-	return mime_data.data("application/vnd.portal.filetransfer");
+	return qml_portal_mime_data->data("application/vnd.portal.filetransfer");
 }
 
 void Backend::handle_dropped_urls(const QList<QUrl> &urls) {
@@ -200,4 +201,13 @@ void Backend::handle_dropped_urls(const QList<QUrl> &urls) {
 	if (Settings::get()->auto_quit_behavior == Settings::AutoQuitBehavior::First && Settings::get()->effective_frontend(true) != Settings::Frontend::Immediate) {
 		Backend::get()->quit_delayed();
 	}
+}
+
+void Backend::handle_dropped_data(const QList<QUrl> &urls, const QByteArray &portal_data) {
+	QMimeData mime_data;
+	mime_data.setUrls(urls);
+	if (!portal_data.isEmpty()) {
+		mime_data.setData("application/vnd.portal.filetransfer", portal_data);
+	}
+	handle_dropped_urls(KUrlMimeData::urlsFromMimeData(&mime_data, KUrlMimeData::PreferLocalUrls));
 }

@@ -1,7 +1,6 @@
 #include <KUrlMimeData>
 #include <QDBusConnection>
 #include <QDBusInterface>
-#include <QDBusReply>
 #include <QMimeData>
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -99,19 +98,16 @@ private slots:
 
 		QTemporaryFile file;
 		QVERIFY(file.open());
-		const auto key = [&file] {
-			QMimeData mime_data;
-			mime_data.setUrls({QUrl::fromLocalFile(file.fileName())});
-			if (!KUrlMimeData::exportUrlsToPortal(&mime_data)) {
-				return QByteArray {};
-			}
-			return mime_data.data("application/vnd.portal.filetransfer");
-		}();
+		QMimeData mime_data;
+		mime_data.setUrls({QUrl::fromLocalFile(file.fileName())});
+		QVERIFY(KUrlMimeData::exportUrlsToPortal(&mime_data));
+		const auto key = mime_data.data("application/vnd.portal.filetransfer");
 		QVERIFY(!key.isEmpty());
-		const QDBusReply<QStringList> reply = portal.call(
-			"RetrieveFiles", QString::fromUtf8(key), QVariantMap {});
-		QVERIFY(reply.isValid());
-		QCOMPARE(reply.value(), QStringList {file.fileName()});
+		QMimeData received_data;
+		received_data.setData("application/vnd.portal.filetransfer", key);
+		QCOMPARE(
+			KUrlMimeData::urlsFromMimeData(&received_data, KUrlMimeData::PreferLocalUrls),
+			QList<QUrl> {QUrl::fromLocalFile(file.fileName())});
 	}
 };
 

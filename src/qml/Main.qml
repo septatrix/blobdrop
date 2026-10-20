@@ -27,7 +27,11 @@ Kirigami.AbstractApplicationWindow {
 		anchors.fill: parent
 		anchors.margins: 2 * Kirigami.Units.gridUnit
 		enabled: !pathView.dragActive
-		onDropped: drop => Backend.handle_dropped_urls(drop.urls)
+		onDropped: drop => {
+			const portalMime = "application/vnd.portal.filetransfer";
+			const portalData = drop.formats.includes(portalMime) ? drop.getDataAsString(portalMime) : "";
+			Backend.handle_dropped_data(drop.urls, portalData);
+		}
 	}
 	Item {
 		anchors.fill: incomingDropArea

@@ -18,6 +18,15 @@ set(deploy_content [=[
 			get_filename_component(plugin_name "${plugin}" NAME)
 			list(APPEND qml_plugins "${QT_DEPLOY_PLUGINS_DIR}/platforms/${plugin_name}")
 		endforeach()
+		# KWindowSystem selects its X11 or Wayland backend at runtime.
+		file(GLOB kwindowsystem_plugins
+			"@BLOBDROP_KWINDOWSYSTEM_PLUGIN_ROOT@/kf6/kwindowsystem/*.so")
+		foreach(plugin IN LISTS kwindowsystem_plugins)
+			file(INSTALL "${plugin}" TYPE SHARED_LIBRARY
+				DESTINATION "${QT_DEPLOY_PREFIX}/${QT_DEPLOY_PLUGINS_DIR}/kf6/kwindowsystem")
+			get_filename_component(plugin_name "${plugin}" NAME)
+			list(APPEND qml_plugins "${QT_DEPLOY_PLUGINS_DIR}/kf6/kwindowsystem/${plugin_name}")
+		endforeach()
 		qt_deploy_runtime_dependencies(
 			EXECUTABLE "$<TARGET_FILE:blobdrop>"
 			ADDITIONAL_MODULES ${qml_plugins}

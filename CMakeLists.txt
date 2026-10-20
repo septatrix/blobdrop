@@ -33,6 +33,8 @@ endif()
 qt_standard_project_setup(REQUIRES ${Qt6_VERSION})
 find_package(KF6Kirigami 6.0 REQUIRED)
 find_package(KF6CoreAddons 6.0 REQUIRED)
+find_package(KF6Notifications 6.0 REQUIRED)
+find_package(KF6WindowSystem 6.0 REQUIRED)
 include(FeatureSummary)
 include(ECMFindQmlModule)
 # Qt and KDE can live in separate prefixes (for example, with Nix).
@@ -48,21 +50,7 @@ block()
 endblock()
 list(TRANSFORM QT_MODULES PREPEND "Qt6::")
 
-list(APPEND LINK_LIBS ${QT_MODULES} KF6::CoreAddons)
-
-if (UNIX AND NOT APPLE)
-	find_package(PkgConfig QUIET)
-	if (PkgConfig_FOUND)
-		pkg_check_modules(XCB QUIET IMPORTED_TARGET xcb xcb-ewmh)
-	endif()
-	if (TARGET PkgConfig::XCB)
-		list(APPEND LINK_LIBS PkgConfig::XCB)
-		add_compile_definitions(BLOBDROP_WITH_X11)
-		message(STATUS "X11 terminal lowering enabled")
-	else()
-		message(STATUS "X11 terminal lowering disabled (requires xcb and xcb-ewmh)")
-	endif()
-endif()
+list(APPEND LINK_LIBS ${QT_MODULES} KF6::CoreAddons KF6::Notifications KF6::WindowSystem)
 
 include_directories("src" "src/Models")
 add_compile_definitions(BLOBDROP_VERSION="${PROJECT_VERSION}")
@@ -87,6 +75,11 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/completions/" DESTINATION "${KDE_I
 install(FILES LICENSE.txt DESTINATION "${KDE_INSTALL_DATAROOTDIR}/doc/blobdrop" RENAME copyright)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	get_filename_component(KF6_WINDOWSYSTEM_PREFIX "${KF6WindowSystem_DIR}/../../.." ABSOLUTE)
+	find_path(BLOBDROP_KWINDOWSYSTEM_PLUGIN_ROOT kf6/kwindowsystem/KF6WindowSystemX11Plugin.so
+		HINTS ${KF6_WINDOWSYSTEM_PREFIX} ${QT6_INSTALL_PREFIX}
+		PATH_SUFFIXES ${QT6_INSTALL_PLUGINS} lib/qt6/plugins lib64/qt6/plugins
+		REQUIRED)
 	install(FILES assets/blobdrop.desktop DESTINATION "${KDE_INSTALL_APPDIR}")
 	install(FILES assets/blobdrop.svg DESTINATION "${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps")
 	include(cmake/Packaging.cmake)

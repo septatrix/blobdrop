@@ -4,14 +4,11 @@
 #include <QDrag>
 #include <QPoint>
 #include <QTimer>
+#include <QtGui/qwindowdefs.h>
 #include <chrono>
 
 #include "Util/util.hpp"
 #include "path.hpp"
-
-#ifdef BLOBDROP_WITH_X11
-#include "xcb.hpp"
-#endif
 
 class Backend : public QObject {
 	Q_OBJECT
@@ -32,13 +29,12 @@ public:
 	void exec_frontend(const std::vector<Path> &paths);
 	Q_INVOKABLE QPoint get_mouse_pos() const;
 	Q_INVOKABLE void handle_dropped_urls(const QList<QUrl> &urls);
+	Q_INVOKABLE void handle_dropped_data(const QList<QUrl> &urls, const QByteArray &portal_data);
 	Q_INVOKABLE QByteArray portal_transfer_data(const QString &uri_list);
 signals:
 	void drag_finished(Qt::DropAction dropAction);
 private:
 	QDrag *drag = nullptr;
-#ifdef BLOBDROP_WITH_X11
-	Xcb xcb;
-	xcb_window_t last_window = 0;
-#endif
+	QMimeData *qml_portal_mime_data = nullptr;
+	WId last_window = 0;
 };
